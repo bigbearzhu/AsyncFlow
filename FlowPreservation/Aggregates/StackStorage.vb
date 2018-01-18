@@ -16,6 +16,8 @@ Namespace FlowPreservation
 
 		<ThreadStatic>
 		Private Shared preservedStacks As StackTraceNode
+		<ThreadStatic>
+		Public Shared AggregateStackString As string = String.Empty
 
 		''' <summary>
 		''' Constructor for stack trace segment lists storage
@@ -35,6 +37,7 @@ Namespace FlowPreservation
 		Public Sub StoreStack(ByVal taskId As Long, ByVal synchronous As Boolean)
 			Dim toStore = If(synchronous, Nothing, preservedStacks.Prepend(GetCurrentSegment))
 			stacksByTask.AddOrUpdate(taskId, toStore, Function(tid, existing) existing.SelectLongest(toStore))
+		    AggregateStackString = GetAggregateStackString()
 		End Sub
 
 		''' <summary>
@@ -45,6 +48,7 @@ Namespace FlowPreservation
             Dim stored As StackTraceNode = Nothing
 			If stacksByTask.TryRemove(taskId, stored) Then
 				preservedStacks = preservedStacks.SelectLongest(stored)
+			    AggregateStackString = GetAggregateStackString()
 			Else
 				Trace.WriteLine("Stack information not stored in transitional repository for task " & taskId & " and thread " & Thread.CurrentThread.ManagedThreadId)
 			End If
@@ -55,6 +59,7 @@ Namespace FlowPreservation
 		''' </summary>
 		Public Sub ResetLocal()
 			preservedStacks = Nothing
+		    AggregateStackString = string.Empty
 		End Sub
 
 		''' <summary>
