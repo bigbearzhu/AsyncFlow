@@ -309,15 +309,17 @@ Namespace FlowPreservation
                 End If
 
                 For i As Integer = 0 To loopsList.Count - 1
-                    If loopsList(i).HighIndex > loopHigh OrElse loopsList(i).LowIndex > loopHigh Then
-                        If loopsList(i).HighIndex <= loopHigh OrElse loopsList(i).LowIndex <= loopHigh Then
-                            Throw New AsyncFlowDiagnosticsException("Loops cannot be broken apart by other loops")
+                    If i <= loopsList.Count - 1 Then
+                        If loopsList(i).HighIndex > loopHigh OrElse loopsList(i).LowIndex > loopHigh Then
+                            If loopsList(i).HighIndex <= loopHigh OrElse loopsList(i).LowIndex <= loopHigh Then
+                                Throw New AsyncFlowDiagnosticsException("Loops cannot be broken apart by other loops")
+                            End If
+                            Dim newHigh As Integer = loopsList(i).HighIndex - loopLength
+                            Dim newLow As Integer = loopsList(i).LowIndex - loopLength
+                            Dim existingLoop = loopsList.SingleOrDefault(Function(l) l.HighIndex = newHigh AndAlso l.LowIndex = newLow)
+                            loopsList(i) = New StackTraceLoop(newHigh, newLow, Math.Max(loopsList(i).Count, existingLoop.Count))
+                            loopsList.Remove(existingLoop)
                         End If
-                        Dim newHigh As Integer = loopsList(i).HighIndex - loopLength
-                        Dim newLow As Integer = loopsList(i).LowIndex - loopLength
-                        Dim existingLoop = loopsList.SingleOrDefault(Function(l) l.HighIndex = newHigh AndAlso l.LowIndex = newLow)
-                        loopsList(i) = New StackTraceLoop(newHigh, newLow, Math.Max(loopsList(i).Count, existingLoop.Count))
-                        loopsList.Remove(existingLoop)
                     End If
                 Next i
 
