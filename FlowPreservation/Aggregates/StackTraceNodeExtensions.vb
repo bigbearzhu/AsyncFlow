@@ -169,9 +169,9 @@ Namespace FlowPreservation
         ''' <param name="args">Method arguments (if null replaced by '...' symbol)</param>
         ''' <returns>A frame string with 'c__DisplayClass' replaced with actual state machine name</returns>
         Public Function PrettifyFrame(ByVal frameStr As String, Optional ByVal args As String = Nothing) As String
-            Dim replacement = "${container}.${method}(" & (If(args, ChrW(&H2026).ToString())) & ")"
-            frameStr = stateMachineRegex.Replace(frameStr, replacement)
-            frameStr = lambdaRegex.Replace(frameStr, replacement)
+            'Dim replacement = "${container}.${method}(" & (If(args, ChrW(&H2026).ToString())) & ")"
+            'frameStr = stateMachineRegex.Replace(frameStr, replacement)
+            'frameStr = lambdaRegex.Replace(frameStr, replacement)
             Return frameStr
         End Function
 
