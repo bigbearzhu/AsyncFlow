@@ -18,7 +18,8 @@ Namespace FlowPreservation
 		''' </summary>
 		''' <param name="storeFileLineColumnInfo">Whether source code information has to be extracted (slower)</param>
 		''' <param name="justMyCode">Omit boilerplate framework code</param>
-		Public Shared Sub Enroll(Optional ByVal storeFileLineColumnInfo As Boolean = True, Optional ByVal justMyCode As Boolean = True)
+		Public Shared Sub Enroll(Optional ByVal storeFileLineColumnInfo As Boolean = True, Optional ByVal justMyCode As Boolean = True, Optional filterPrefix As String = "")
+		    StackTraceSlim.FilterPrex = filterPrefix
 			If stackStorage Is Nothing Then
 				SyncLock initLocker
 					If stackStorage Is Nothing Then

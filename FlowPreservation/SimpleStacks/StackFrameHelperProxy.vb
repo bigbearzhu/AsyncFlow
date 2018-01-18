@@ -1,3 +1,4 @@
+Imports System.Collections.Concurrent
 Imports System.Linq.Expressions
 Imports System.Reflection
 Imports System.Text
@@ -11,6 +12,7 @@ Namespace FlowPreservation
 	''' </summary>
 	Friend Class StackFrameHelperProxy
 		Private Shared privateUnderlyingType As Type
+		Private Shared ReadOnly methods As New ConcurrentDictionary(Of IntPtr, MethodBaseSlim)
 		Public Shared Property UnderlyingType As Type
 			Get
 				Return privateUnderlyingType
@@ -89,7 +91,23 @@ Namespace FlowPreservation
 		''' <param name="index">Frame index in a stack trace</param>
 		''' <returns>New StackFrameSlim</returns>
 		Public Function CreateFrame(ByVal index As Integer) As StackFrameSlim
-            Return createFrameVal(UnderlyingInstance, index)
+		    Dim frame  = createFrameVal(UnderlyingInstance, index)
+            frame.Method = GetMethodForHandle(frame.MethodHandle)
+		    Return frame
+		End Function
+
+		''' <summary>
+		''' Finds method by handle, first looking at cached methods table
+		''' </summary>
+		''' <param name="methodHandle">Handle</param>
+		''' <returns>MethodBaseSlim</returns>
+		Private Function GetMethodForHandle(ByVal methodHandle As IntPtr) As MethodBaseSlim
+		    Dim method As MethodBaseSlim = Nothing
+		    If Not methods.TryGetValue(methodHandle, method) Then
+		        method = New MethodBaseSlim(StackFrameHelperProxy.GetMethod(methodHandle))
+		        methods.AddOrUpdate(methodHandle, method, Function(k, v) v)
+		    End If
+		    Return method
 		End Function
 
 		''' <summary>

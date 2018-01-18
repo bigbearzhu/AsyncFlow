@@ -1,18 +1,13 @@
-Imports System.Collections.Concurrent
 Imports System.Linq.Expressions
 Imports System.Reflection
-Imports System.Runtime.CompilerServices
-Imports System.Text
-Imports System.Threading
-Imports System.Threading.Tasks
 
 Namespace FlowPreservation
 	''' <summary>
 	''' More lightweight analog to StackTrace
 	''' </summary>
 	Friend Class StackTraceSlim
+		Public Shared FilterPrex As String = String.Empty
 		Private Shared ReadOnly getStackFramesInternal As Action(Of Boolean, Object)
-		Private Shared ReadOnly methods As New ConcurrentDictionary(Of IntPtr, MethodBaseSlim)
 
 		''' <summary>
 		''' Creates necessary delegate
@@ -42,27 +37,15 @@ Namespace FlowPreservation
 		Public Sub New(ByVal needFileLineColInfo As Boolean)
 			Dim sfh = New StackFrameHelperProxy()
 			getStackFramesInternal(needFileLineColInfo, sfh.UnderlyingInstance)
-			Frames = New StackFrameSlim(sfh.GetNumberOfFrames - 1){}
-			For i  = 0 To Frames.Length - 1
-				Frames(i) = sfh.CreateFrame(i)
-				Frames(i).Method = GetMethodForHandle(Frames(i).MethodHandle)
-			Next i
+
+            Frames = (From I in Enumerable.Range(0, sfh.GetNumberOfFrames)
+                     Let frame = sfh.CreateFrame(i)
+                     Where frame.Method.StringValue.StartsWith(FilterPrex)
+                     Select frame).ToArray()
 		End Sub
 
 		Public Frames() As StackFrameSlim
 
-		''' <summary>
-		''' Finds method by handle, first looking at cached methods table
-		''' </summary>
-		''' <param name="methodHandle">Handle</param>
-		''' <returns>MethodBaseSlim</returns>
-		Private Function GetMethodForHandle(ByVal methodHandle As IntPtr) As MethodBaseSlim
-            Dim method As MethodBaseSlim = Nothing
-			If Not methods.TryGetValue(methodHandle, method) Then
-				method = New MethodBaseSlim(StackFrameHelperProxy.GetMethod(methodHandle))
-				methods.AddOrUpdate(methodHandle, method, Function(k, v) v)
-			End If
-			Return method
-		End Function
+
 	End Class
 End Namespace
