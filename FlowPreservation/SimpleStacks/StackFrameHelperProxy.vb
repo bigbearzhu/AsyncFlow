@@ -20,7 +20,7 @@ Namespace FlowPreservation
 			End Set
 		End Property
 
-		Private Shared ReadOnly createUnderlyingInstance As Func(Of Boolean, Object)
+		Private Shared ReadOnly createUnderlyingInstance As Func(Of Object)
         Private Shared ReadOnly getNumberOfFramesVal As Func(Of Object, Integer)
         Private Shared ReadOnly createFrameVal As Func(Of Object, Integer, StackFrameSlim)
         Private Shared ReadOnly getMethodVal As Func(Of IntPtr, MethodBase)
@@ -30,15 +30,12 @@ Namespace FlowPreservation
 		''' </summary>
 		Shared Sub New()
 			UnderlyingType = Type.GetType("System.Diagnostics.StackFrameHelper", True)
-			Dim stackFrameHelperCtor = UnderlyingType.GetConstructor( { GetType(Boolean), GetType(Thread) })
+			Dim stackFrameHelperCtor = UnderlyingType.GetConstructor( { GetType(Thread) })
 			Dim currentThreadProperty = GetType(Thread).GetProperty("CurrentThread")
-			Dim needFileLineColInfoParam = Expression.Parameter(GetType(Boolean))
-            createUnderlyingInstance = Expression.Lambda(Of Func(Of Boolean, Object))(
+            createUnderlyingInstance = Expression.Lambda(Of Func(Of Object))(
                 Expression.[New](
                     stackFrameHelperCtor,
-                    needFileLineColInfoParam,
-                    Expression.Property(Nothing, currentThreadProperty)),
-                needFileLineColInfoParam).Compile()
+                    Expression.Property(Nothing, currentThreadProperty))).Compile()
 
 			Dim stackFrameHelperParam = Expression.Parameter(GetType(Object))
 			Dim stackFrameHelperAsItself = Expression.Convert(stackFrameHelperParam, UnderlyingType)
@@ -74,8 +71,8 @@ Namespace FlowPreservation
 		''' Constructor
 		''' </summary>
 		''' <param name="needFileLineColInfo">Whether source file information should be extracted</param>
-		Public Sub New(ByVal needFileLineColInfo As Boolean)
-			Me.UnderlyingInstance = createUnderlyingInstance(needFileLineColInfo)
+		Public Sub New()
+			Me.UnderlyingInstance = createUnderlyingInstance()
 		End Sub
 
 		''' <summary>

@@ -11,7 +11,7 @@ Namespace FlowPreservation
 	''' More lightweight analog to StackTrace
 	''' </summary>
 	Friend Class StackTraceSlim
-		Private Shared ReadOnly getStackFramesInternal As Action(Of Object)
+		Private Shared ReadOnly getStackFramesInternal As Action(Of Boolean, Object)
 		Private Shared ReadOnly methods As New ConcurrentDictionary(Of IntPtr, MethodBaseSlim)
 
 		''' <summary>
@@ -20,7 +20,15 @@ Namespace FlowPreservation
 		Shared Sub New()
             Dim getStackFramesInternalMethod = GetType(StackTrace).GetMethod("GetStackFramesInternal", BindingFlags.NonPublic Or BindingFlags.Static)
 			Dim stackFrameHelperParam = Expression.Parameter(GetType(Object))
-			getStackFramesInternal = Expression.Lambda(Of Action(Of Object))(Expression.Call(getStackFramesInternalMethod, Expression.Convert(stackFrameHelperParam, StackFrameHelperProxy.UnderlyingType), Expression.Constant(0), Expression.Constant(Nothing, GetType(Exception))), MethodNameHelper.GetLambdaMethodName, { stackFrameHelperParam }).Compile
+			Dim needFileLineColInfoParam = Expression.Parameter(GetType(Boolean))
+			getStackFramesInternal = Expression.Lambda(Of Action(Of Boolean, Object))(
+                Expression.Call(getStackFramesInternalMethod, 
+                                Expression.Convert(stackFrameHelperParam, StackFrameHelperProxy.UnderlyingType), 
+                                Expression.Constant(0), 
+                                needFileLineColInfoParam,
+                                Expression.Constant(Nothing, GetType(Exception))), 
+                MethodNameHelper.GetLambdaMethodName, 
+                { needFileLineColInfoParam, stackFrameHelperParam }).Compile
 		End Sub
 
 		Friend Sub New(ByVal frames() As StackFrameSlim)
@@ -32,8 +40,8 @@ Namespace FlowPreservation
 		''' </summary>
 		''' <param name="needFileLineColInfo">Whether source code information should be extracted</param>
 		Public Sub New(ByVal needFileLineColInfo As Boolean)
-			Dim sfh = New StackFrameHelperProxy(needFileLineColInfo)
-			getStackFramesInternal(sfh.UnderlyingInstance)
+			Dim sfh = New StackFrameHelperProxy()
+			getStackFramesInternal(needFileLineColInfo, sfh.UnderlyingInstance)
 			Frames = New StackFrameSlim(sfh.GetNumberOfFrames - 1){}
 			For i  = 0 To Frames.Length - 1
 				Frames(i) = sfh.CreateFrame(i)
