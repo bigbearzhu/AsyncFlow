@@ -40,7 +40,7 @@ Namespace FlowPreservation
 
             Frames = (From I in Enumerable.Range(0, sfh.GetNumberOfFrames)
                      Let frame = sfh.CreateFrame(i)
-                     Where frame.Method.StringValue.StartsWith(FilterPrex)
+                     Where String.IsNullOrEmpty(FilterPrex) Or frame.Method.StringValue.StartsWith(FilterPrex)
                      Select frame).ToArray()
 		End Sub
 

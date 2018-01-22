@@ -38,7 +38,7 @@ Namespace FlowPreservation
 		''' </summary>
 		Public Shared ReadOnly Property ExtendedStack As String
 			Get
-				Return If(stackStorage Is Nothing, storageUninitialized, stackStorage.AggregateStackString)
+				Return If(stackStorage Is Nothing, storageUninitialized, stackStorage.AggregateStackString.Value)
 			End Get
 		End Property
 	End Class
